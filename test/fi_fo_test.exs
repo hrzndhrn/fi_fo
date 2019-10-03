@@ -142,4 +142,8 @@ defmodule FiFoTest do
     assert drop(queue, 10) == %FiFo{front: [], rear: []}
     assert drop(queue, 11) == %FiFo{front: [], rear: []}
   end
+
+  test "inspect/1" do
+    assert from_list([1,2,3]) |> inspect == "#FiFo<[1, 2, 3]>"
+  end
 end

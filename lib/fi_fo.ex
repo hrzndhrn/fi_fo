@@ -1,25 +1,67 @@
 defmodule FiFo do
+  @moduledoc """
+  This module provides FIFO queues in an efficient manner.
+
+  The module is a reimplementation of the Erlang module
+  [queue](http://erlang.org/doc/man/queue.html) with a different API and without
+  reverse operations.
+  """
+
   @compile :inline_list_funcs
   @compile {:inline, to_front: 1}
 
   @type front :: list
   @type rear :: list
-  @type value :: {:ok, term}
+  @type element :: term
+  @type value :: {:ok, element}
   @type empty :: %__MODULE__{rear: [], front: []}
   @type t :: %__MODULE__{rear: list, front: list}
 
   defstruct rear: [], front: []
 
+  @doc """
+  Returns an empty queue.
+
+  ## Examples
+
+      iex> FiFo.new()
+      #FiFo<[]>
+  """
   @spec new :: t
   def new, do: %FiFo{}
 
-  @spec push(t, term) :: t
+  @doc """
+  Pushes an element to the queue.
+
+  ## Examples
+
+      iex> queue = FiFo.new()
+      iex> queue = FiFo.push(queue, 2)
+      #FiFo<[2]>
+      iex> FiFo.push(queue, 4)
+      #FiFo<[2, 4]>
+  """
+  @spec push(t, element) :: t
   def push(%FiFo{rear: [], front: []}, x), do: %FiFo{rear: [x], front: []}
 
   def push(%FiFo{rear: [_] = rear, front: []}, x), do: %FiFo{rear: [x], front: rear}
 
   def push(%FiFo{rear: rear, front: front}, x), do: %FiFo{rear: [x | rear], front: front}
 
+  @doc """
+  Returns a tuple with an `:ok` tuple containing the element and the remaining
+  queue. If the queue is empty a tuple with `{:error, :empty}` and an empty
+  queue is returned.
+
+  ## Examples
+
+      iex> queue = FiFo.from_list([1,2,3])
+      iex> FiFo.pop(queue) == {{:ok, 1}, FiFo.drop(queue, 1)}
+      true
+
+      iex> FiFo.new() |> FiFo.pop() == {{:error, :empty}, %FiFo{}}
+      true
+  """
   @spec pop(t) :: {value, t} | {{:error, :empty}, empty}
   def pop(%FiFo{rear: [], front: []}), do: {{:error, :empty}, %FiFo{}}
 
@@ -83,7 +125,7 @@ defmodule FiFo do
   @spec size(t) :: integer
   def size(%FiFo{rear: rear, front: front}), do: length(rear) + length(front)
 
-  @spec member?(t, term) :: boolean
+  @spec member?(t, element) :: boolean
   def member?(%FiFo{rear: rear, front: front}, x),
     do: :lists.member(x, front) || :lists.member(x, rear)
 
@@ -96,7 +138,7 @@ defmodule FiFo do
     %FiFo{rear: :lists.reverse(rear), front: front}
   end
 
-  @spec filter(t, (term -> as_boolean(term))) :: t
+  @spec filter(t, (element -> as_boolean(element))) :: t
   def filter(%FiFo{rear: rear, front: front}, fun) do
     rear = Enum.filter(rear, fun)
     front = Enum.filter(front, fun)
@@ -124,5 +166,14 @@ defmodule FiFo do
     end
 
     def reduce(queue, acc, fun), do: queue |> FiFo.to_list() |> Enumerable.List.reduce(acc, fun)
+  end
+
+  defimpl Inspect do
+    import Inspect.Algebra
+
+    def inspect(queue, opts) do
+      opts = %Inspect.Opts{opts | charlists: :as_lists}
+      concat(["#FiFo<", Inspect.List.inspect(FiFo.to_list(queue), opts), ">"])
+    end
   end
 end
