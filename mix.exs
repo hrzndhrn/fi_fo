@@ -18,8 +18,7 @@ defmodule FiFo.MixProject do
         "coveralls.travis": :test,
         "coveralls.html": :test,
         "gen.test_suite": :test
-      ],
-
+      ]
     ]
   end
 
