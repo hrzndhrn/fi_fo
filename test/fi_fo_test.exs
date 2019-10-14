@@ -540,6 +540,6 @@ defmodule FiFoTest do
   end
 
   test "Enum.into/2" do
-    assert Enum.into([1, 2, 3], FiFo.new()) == FiFo.from_range(1..3)
+    assert Enum.into([1, 2, 3], FiFo.new()) == %FiFo{rear: [3, 2], front: [1]}
   end
 end
