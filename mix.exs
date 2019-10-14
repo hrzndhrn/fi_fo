@@ -8,7 +8,7 @@ defmodule FiFo.MixProject do
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      description: "Just a FIFO queue.",
+      description: description(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         carp: :test,
@@ -26,6 +26,10 @@ defmodule FiFo.MixProject do
     [
       extra_applications: [:logger]
     ]
+  end
+
+  def description do
+    "This module provides (double-ended) FIFO queues in an efficient manner."
   end
 
   defp deps do
