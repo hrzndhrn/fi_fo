@@ -1,16 +1,19 @@
 # FiFo
+[![Hex.pm](https://img.shields.io/hexpm/v/fi_fo.svg)](https://hex.pm/packages/fi_fo)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build Status](https://travis-ci.org/hrzndhrn/fi_fo.svg?branch=master)](https://travis-ci.org/hrzndhrn/fi_fo)
+[![Coverage Status](https://coveralls.io/repos/github/hrzndhrn/fi_fo/badge.svg?branch=master)](https://coveralls.io/github/hrzndhrn/fi_fo?branch=master)
+[![codebeat badge](https://codebeat.co/badges/c6fb98cb-2044-48b8-9614-100940c62016)](https://codebeat.co/projects/github-com-hrzndhrn-fi_fo-master)
 
 This module provides (double-ended) FIFO queues in an efficient manner.
 
-`FiFo` is just a rewrite of the [Erlang](erl) module [queue](erl_queue) in an
-Elixir way. The module includes implementations of the protocols
-[Enumerabale](enumerable), [Collectable](collectable), and [Inspect](inspect).
+`FiFo` is just a rewrite of the [Erlang] module [queue] in an Elixir way. The
+module includes implementations of the protocols [Enumerabale],
+[Collectable], and [Inspect].
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish):
-
-First, add Xema to your `mix.exs` dependencies:
+First, add `fi_fo` to your `mix.exs` dependencies:
 
 ```elixir
 def deps do
@@ -24,7 +27,7 @@ Then, update your dependencies:
 $ mix deps.get
 ```
 
-Documentation can be found at [HexDocs](fi_fo).
+Documentation can be found at [HexDocs].
 
 ## Usage
 
@@ -76,9 +79,9 @@ iex(16)> Enum.take(queue, 3)
 [1, 2, 3]
 ```
 
-[erl]: https://www.erlang.org/
-[erl_queue]: http://erlang.org/doc/man/queue.html
-[enumerable]: https://hexdocs.pm/elixir/Enumerable.html
-[collectable]: https://hexdocs.pm/elixir/Collectable.html
-[inspect]: https://hexdocs.pm/elixir/Inspect.html
-[fi_fo]: https://hexdocs.pm/fi_fo/api-reference.html
+[Erlang]: https://www.erlang.org/
+[queue]: http://erlang.org/doc/man/queue.html
+[Enumerable]: https://hexdocs.pm/elixir/Enumerable.html
+[Collectable]: https://hexdocs.pm/elixir/Collectable.html
+[Inspect]: https://hexdocs.pm/elixir/Inspect.html
+[HexDocs]: https://hexdocs.pm/fi_fo/api-reference.html
