@@ -28,7 +28,7 @@ Documentation can be found at [HexDocs](fi_fo).
 
 ## Usage
 
-Construct, write, and read: `new/0`, `push/2`, and `pop/1`:
+Construct, write, and read: `FiFo.new/0`, `FiFo.push/2`, and `FiFo.pop/1`:
 ```elixir
 iex(1)> queue = FiFo.new()
 #FiFo<[]>
@@ -43,8 +43,8 @@ iex(5)> {{:ok, x}, queue} = FiFo.pop(queue)
 iex(6)> FiFo.pop(queue)
 {:error, #FiFo<[]>}
 ```
-A queue from other data structures: `from_list/1`, `from_range/1`, and
-`from_erlange_queue`:
+Create a queue from other data structures: `FiFo.from_list/1`,
+`FiFo.from_range/1`, and `FiFo.from_erlange_queue`:
 ```elixir
 iex(7)> FiFo.from_list([1, 2, 3, 4])
 #FiFo<[1, 2, 3, 4]>
@@ -52,6 +52,28 @@ iex(8)> FiFo.from_range(1..10)
 #FiFo<[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]>
 iex(9)> FiFo.from_erlang_queue({[3, 2], [1]})
 #FiFo<[1, 2, 3]>
+```
+Convert a queue to other data structures: `FiFo.to_list/1` and
+`FiFo.to_erlang_queue/1`:
+```elixir
+iex(10)> queue = FiFo.from_list([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+#FiFo<[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]>
+iex(11)> FiFo.to_list(queue)
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+iex(12)> FiFo.to_erlang_queue(queue)
+{[10, 9, 8, 7], [1, 2, 3, 4, 5, 6]}
+```
+Take and drop elements: `FiFo.drop/2`, `FiFo.take/2`, `Enum.drop/1`, and
+`Enum.take/2`:
+```elixir
+iex(13)> FiFo.drop(queue, 3)
+#FiFo<[4, 5, 6, 7, 8, 9, 10]>
+iex(14)> FiFo.take(queue, 3)
+{[1, 2, 3], #FiFo<[4, 5, 6, 7, 8, 9, 10]>}
+iex(15)> Enum.drop(queue, 3)
+[4, 5, 6, 7, 8, 9, 10]
+iex(16)> Enum.take(queue, 3)
+[1, 2, 3]
 ```
 
 [erl]: https://www.erlang.org/

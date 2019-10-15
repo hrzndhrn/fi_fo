@@ -2,8 +2,10 @@ defmodule FiFo do
   @moduledoc """
   This module provides FIFO queues in an efficient manner.
 
-  The module is a reimplementation of the Erlang module
-  [queue](http://erlang.org/doc/man/queue.html) with a different API.
+  `FiFo` is just a rewrite of the [Erlang](http://erlang.org)
+  module [queue](http://erlang.org/doc/man/queue.html) in an
+  Elixir way. The module includes implementations of the protocols
+  `Enumerabale`, `Collectable`, and `Inspect`.
   """
 
   # All queues generated with functions from this module are wellformed. A
