@@ -9,7 +9,9 @@ defmodule FiFo.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: description(),
+      package: package(),
       test_coverage: [tool: ExCoveralls],
+      source_url: "https://github.com/hrzndhrn/fi_fo",
       preferred_cli_env: [
         carp: :test,
         coveralls: :test,
@@ -38,6 +40,20 @@ defmodule FiFo.MixProject do
       {:dialyxir, "~> 1.0.0-rc.7", only: :dev, runtime: false},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:excoveralls, "~> 0.11", only: :test}
+    ]
+  end
+
+  defp package do
+    [
+      maintainers: ["Marcus Kruse"],
+      licenses: ["Apache 2.0"],
+      links: %{"GitHub" => "https://github.com/hrzndhrn/fi_fo"},
+      files: [
+        "lib",
+        "mix.exs",
+        "README*",
+        "LICENSE*"
+      ]
     ]
   end
 end
