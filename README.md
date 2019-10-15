@@ -8,7 +8,7 @@
 This module provides (double-ended) FIFO queues in an efficient manner.
 
 `FiFo` is just a rewrite of the [Erlang] module [queue] in an Elixir way. The
-module includes implementations of the protocols [Enumerabale],
+module includes implementations of the protocols [Enumerable],
 [Collectable], and [Inspect].
 
 ## Installation
