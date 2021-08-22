@@ -289,6 +289,9 @@ defmodule FiFoTest do
 
       assert FiFo.pop(%FiFo{rear: [4, 3], front: [1, 2]}) ==
                {{:ok, 1}, %FiFo{rear: [4, 3], front: [2]}}
+
+      assert FiFo.pop(%FiFo{rear: [3, 2], front: [1]}) ==
+               {{:ok, 1}, %FiFo{rear: [3], front: [2]}}
     end
 
     test "with a malformed queue" do
@@ -359,6 +362,9 @@ defmodule FiFoTest do
 
       assert FiFo.pop_reverse(%FiFo{rear: [4, 3], front: [1, 2]}) ==
                {{:ok, 4}, %FiFo{rear: [3], front: [1, 2]}}
+
+      assert FiFo.pop_reverse(%FiFo{rear: [3, 2], front: [1]}) ==
+               {{:ok, 3}, %FiFo{rear: [2], front: [1]}}
     end
 
     test "with a malformed queue" do
@@ -497,6 +503,32 @@ defmodule FiFoTest do
       %{queue: %FiFo{rear: [10, 9, 8, 7, 6], front: [1, 2, 3, 4, 5]}}
     end
 
+    test "take one by one from front", %{queue: queue} do
+      assert {[1], queue} = FiFo.take(queue, 1)
+      assert {[2], queue} = FiFo.take(queue, 1)
+      assert {[3], queue} = FiFo.take(queue, 1)
+      assert {[4], queue} = FiFo.take(queue, 1)
+      assert {[5], queue} = FiFo.take(queue, 1)
+      assert {[6], queue} = FiFo.take(queue, 1)
+      assert {[7], queue} = FiFo.take(queue, 1)
+      assert {[8], queue} = FiFo.take(queue, 1)
+      assert {[9], queue} = FiFo.take(queue, 1)
+      assert {[10], _queue} = FiFo.take(queue, 1)
+    end
+
+    test "take one by one from rear", %{queue: queue} do
+      assert {[10], queue} = FiFo.take(queue, -1)
+      assert {[9], queue} = FiFo.take(queue, -1)
+      assert {[8], queue} = FiFo.take(queue, -1)
+      assert {[7], queue} = FiFo.take(queue, -1)
+      assert {[6], queue} = FiFo.take(queue, -1)
+      assert {[5], queue} = FiFo.take(queue, -1)
+      assert {[4], queue} = FiFo.take(queue, -1)
+      assert {[3], queue} = FiFo.take(queue, -1)
+      assert {[2], queue} = FiFo.take(queue, -1)
+      assert {[1], _queue} = FiFo.take(queue, -1)
+    end
+
     test "take some from front", %{queue: queue} do
       assert FiFo.take(queue, 3) == {[1, 2, 3], %FiFo{rear: [10, 9, 8, 7, 6], front: [4, 5]}}
     end
@@ -527,15 +559,48 @@ defmodule FiFoTest do
     test "take all from rear and some from front", %{queue: queue} do
       assert FiFo.take(queue, -7) == {[10, 9, 8, 7, 6, 5, 4], %FiFo{rear: [3], front: [1, 2]}}
     end
+
+    test "take all (special cases)" do
+      empty = FiFo.new()
+
+      queue = %FiFo{rear: [], front: [1, 2, 3]}
+      assert FiFo.take(queue, 10) == {[1, 2, 3], empty}
+
+      queue = %FiFo{rear: [3, 2, 1], front: []}
+      assert FiFo.take(queue, 10) == {[1, 2, 3], empty}
+
+      queue = %FiFo{rear: [3, 2], front: [1]}
+      assert FiFo.take(queue, 10) == {[1, 2, 3], empty}
+
+      queue = %FiFo{rear: [2], front: [1]}
+      assert FiFo.take(queue, 2) == {[1, 2], empty}
+    end
   end
 
   describe "enumerable" do
     test "slice" do
       assert Enum.slice(FiFo.from_range(1..6), 2, 4) == [3, 4, 5, 6]
+      assert Enum.slice(FiFo.from_range(1..8), 2, 4) == [3, 4, 5, 6]
+      assert Enum.slice(FiFo.new(), 2, 4) == []
     end
 
     test "reduce" do
       assert Enum.reduce(FiFo.from_range(1..3), 0, fn x, acc -> x + acc end) == 6
+    end
+
+    test "member?" do
+      queue = FiFo.from_range(1..5)
+      assert Enum.member?(queue, 1) == true
+      assert Enum.member?(queue, 9) == false
+    end
+
+    test "count" do
+      assert Enum.count(FiFo.from_range(1..5)) == 5
+    end
+
+    test "map" do
+      queue = %FiFo{rear: [10, 9, 8, 7, 6], front: [1, 2, 3, 4, 5]}
+      assert Enum.map(queue, fn x -> x * 2 end) == [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
     end
   end
 

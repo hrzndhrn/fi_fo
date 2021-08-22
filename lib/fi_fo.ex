@@ -708,14 +708,9 @@ defmodule FiFo do
         {result, {rear, rest}}
 
       diff ->
-        case length(rear) + diff do
-          at when at > 0 and at < length(rear) ->
-            {rest, result} = :lists.split(at, rear)
-            {:lists.append(front, :lists.reverse(result)), to_front(rest)}
-
-          _ ->
-            {:lists.append(front, :lists.reverse(rear)), {[], []}}
-        end
+        at = length(rear) + diff
+        {rest, result} = :lists.split(at, rear)
+        {:lists.append(front, :lists.reverse(result)), to_front(rest)}
     end
   end
 
@@ -823,10 +818,9 @@ defmodule FiFo do
       {:ok, FiFo.member?(queue, x)}
     end
 
-    def slice([]), do: {:ok, 0, fn _, _ -> [] end}
+    def slice(queue) when is_map(queue), do: queue |> FiFo.to_list() |> slice()
 
-    def slice(queue) do
-      list = FiFo.to_list(queue)
+    def slice(list) do
       size = length(list)
       {:ok, size, &slice(list, &1, &2, size)}
     end
