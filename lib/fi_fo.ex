@@ -826,7 +826,7 @@ defmodule FiFo do
     def slice(queue) do
       list = FiFo.to_list(queue)
       size = length(list)
-      {:ok, size, &Enumerable.List.slice(list, &1, &2)}
+      {:ok, size, &Enumerable.List.slice(list, &1, &2, size)}
     end
 
     def reduce(queue, acc, fun) do
