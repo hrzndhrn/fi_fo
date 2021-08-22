@@ -1,9 +1,9 @@
 # FiFo
 [![Hex.pm](https://img.shields.io/hexpm/v/fi_fo.svg)](https://hex.pm/packages/fi_fo)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://travis-ci.org/hrzndhrn/fi_fo.svg?branch=master)](https://travis-ci.org/hrzndhrn/fi_fo)
 [![Coverage Status](https://coveralls.io/repos/github/hrzndhrn/fi_fo/badge.svg?branch=master)](https://coveralls.io/github/hrzndhrn/fi_fo?branch=master)
 [![codebeat badge](https://codebeat.co/badges/c6fb98cb-2044-48b8-9614-100940c62016)](https://codebeat.co/projects/github-com-hrzndhrn-fi_fo-master)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 This module provides (double-ended) FIFO queues in an efficient manner.
 
