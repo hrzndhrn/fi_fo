@@ -39,7 +39,7 @@ defmodule FiFo.MixProject do
     [
       {:benchee, "~> 1.0", only: :dev},
       {:credo, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.7", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.1", only: :dev, runtime: false},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:excoveralls, "~> 0.11", only: :test}
     ]
