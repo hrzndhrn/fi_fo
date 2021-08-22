@@ -823,11 +823,18 @@ defmodule FiFo do
       {:ok, FiFo.member?(queue, x)}
     end
 
+    def slice([]), do: {:ok, 0, fn _, _ -> [] end}
+
     def slice(queue) do
       list = FiFo.to_list(queue)
       size = length(list)
-      {:ok, size, &Enumerable.List.slice(list, &1, &2, size)}
+      {:ok, size, &slice(list, &1, &2, size)}
     end
+
+    @doc false
+    def slice(_list, _start, 0, _size), do: []
+    def slice(list, start, count, size) when start + count == size, do: list |> Enum.drop(start)
+    def slice(list, start, count, _size), do: list |> Enum.drop(start) |> Enum.take(count)
 
     def reduce(queue, acc, fun) do
       queue |> FiFo.to_list() |> Enumerable.List.reduce(acc, fun)
