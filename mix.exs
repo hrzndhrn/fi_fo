@@ -4,7 +4,7 @@ defmodule FiFo.MixProject do
   def project do
     [
       app: :fi_fo,
-      version: "0.1.1",
+      version: "0.1.2",
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -48,7 +48,7 @@ defmodule FiFo.MixProject do
   defp package do
     [
       maintainers: ["Marcus Kruse"],
-      licenses: ["Apache 2.0"],
+      licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/hrzndhrn/fi_fo"},
       files: [
         "lib",
