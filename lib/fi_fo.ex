@@ -827,7 +827,7 @@ defmodule FiFo do
 
     @doc false
     def slice(_list, _start, 0, _size), do: []
-    def slice(list, start, count, size) when start + count == size, do: list |> Enum.drop(start)
+    def slice(list, start, count, size) when start + count == size, do: Enum.drop(list, start)
     def slice(list, start, count, _size), do: list |> Enum.drop(start) |> Enum.take(count)
 
     def reduce(queue, acc, fun) do
