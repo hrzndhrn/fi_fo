@@ -17,10 +17,8 @@ defmodule FiFo.MixProject do
         carp: :test,
         coveralls: :test,
         "coveralls.detail": :test,
-        "coveralls.post": :test,
-        "coveralls.travis": :test,
-        "coveralls.html": :test,
-        "gen.test_suite": :test
+        "coveralls.github": :test,
+        "coveralls.html": :test
       ]
     ]
   end
