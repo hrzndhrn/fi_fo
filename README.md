@@ -1,6 +1,6 @@
 # FiFo
 [![Hex.pm: version](https://img.shields.io/hexpm/v/fi_fo.svg?style=flat-square)](https://hex.pm/packages/fi_fo)
-[![GitHub: CI status](https://img.shields.io/github/workflow/status/hrzndhrn/fi_fo/CI?style=flat-square)](https://github.com/hrzndhrn/fi_fo/actions)
+[![GitHub: CI status](https://img.shields.io/github/actions/workflow/status/hrzndhrn/fi_fo/ci.yml?branch=main&style=flat-square)](https://github.com/hrzndhrn/fi_fo/actions)
 [![Coveralls: coverage](https://img.shields.io/coveralls/github/hrzndhrn/fi_fo?style=flat-square)](https://coveralls.io/github/hrzndhrn/fi_fo)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://github.com/hrzndhrn/fi_fo/blob/main/LICENSE.md)
 
