@@ -719,10 +719,12 @@ defmodule FiFo do
 
   ## Examples
 
-      iex> q = FiFo.to_erlang_queue(FiFo.from_list([1, 2, 3, 4, 5]))
+      iex> q = [1, 2, 3, 4, 5]
+      ...>     |> FiFo.from_list()
+      ...>     |> FiFo.to_erlang_queue()
       {[5, 4], [1, 2, 3]}
-      iex> q == :queue.from_list([1, 2, 3, 4, 5])
-      true
+      iex> :queue.out(q)
+      {{:value, 1}, {[5, 4], [2, 3]}}
   """
   @spec to_erlang_queue(t) :: {rear, front}
   def to_erlang_queue(queue)
