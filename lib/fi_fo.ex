@@ -692,9 +692,9 @@ defmodule FiFo do
     case queue do
       {[], front} -> {front, {[], []}}
       {[_] = x, front} -> {:lists.append(front, x), {[], []}}
-      {rear, []} -> {:lists.reverse(rear), {[], []}}
-      {rear, [x]} -> {[x | :lists.reverse(rear)], {[], []}}
-      {rear, front} -> {:lists.append(front, :lists.reverse(rear)), {[], []}}
+      {rear, []} -> {:lists.reverse(rear, []), {[], []}}
+      {rear, [x]} -> {[x | :lists.reverse(rear, [])], {[], []}}
+      {rear, front} -> {:lists.append(front, :lists.reverse(rear, [])), {[], []}}
     end
   end
 
@@ -710,7 +710,7 @@ defmodule FiFo do
       diff ->
         at = length(rear) + diff
         {rest, result} = :lists.split(at, rear)
-        {:lists.append(front, :lists.reverse(result)), to_front(rest)}
+        {:lists.append(front, :lists.reverse(result, [])), to_front(rest)}
     end
   end
 
@@ -743,7 +743,7 @@ defmodule FiFo do
   def to_list(queue)
 
   def to_list(%FiFo{rear: rear, front: front}) do
-    :lists.append(front, :lists.reverse(rear))
+    :lists.append(front, :lists.reverse(rear, []))
   end
 
   # Move half of elements from rear to front, if there are enough.
@@ -761,7 +761,7 @@ defmodule FiFo do
 
   defp to_front(list) do
     {rear, front} = :lists.split(div(length(list), 2) + 1, list)
-    {rear, :lists.reverse(front)}
+    {rear, :lists.reverse(front, [])}
   end
 
   # Move half of elements from front to rear, if there are enough.
@@ -779,7 +779,7 @@ defmodule FiFo do
 
   defp to_rear(list) do
     {front, rear} = :lists.split(div(length(list), 2) + 1, list)
-    {:lists.reverse(rear), front}
+    {:lists.reverse(rear, []), front}
   end
 
   # Updates an Erlang queue in a wellformed FiFo queue.
