@@ -12,7 +12,6 @@ defmodule FiFo.MixProject do
       package: package(),
       test_coverage: [tool: ExCoveralls],
       source_url: "https://github.com/hrzndhrn/fi_fo",
-      aliases: aliases(),
       preferred_cli_env: [
         carp: :test,
         coveralls: :test,
@@ -36,7 +35,7 @@ defmodule FiFo.MixProject do
 
   defp deps do
     [
-      {:benchee, "~> 1.0", only: :dev},
+      {:benchee_dsl, "~> 0.5", only: :dev},
       {:credo, "~> 1.1", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.1", only: :dev, runtime: false},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
@@ -56,9 +55,5 @@ defmodule FiFo.MixProject do
         "LICENSE*"
       ]
     ]
-  end
-
-  defp aliases do
-    [bench: ["run bench/run.exs"]]
   end
 end
