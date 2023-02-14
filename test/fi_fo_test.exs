@@ -1,610 +1,444 @@
 defmodule FiFoTest do
   use ExUnit.Case
+
+  import Prove
+
   doctest FiFo
 
-  test "new/0" do
-    assert FiFo.new() == %FiFo{}
+  batch "new/0 create an empty queue" do
+    prove FiFo.new() == {[], []}
+  end
+
+  describe "new/1" do
+    batch "creates a queue from a list" do
+      prove FiFo.new([]) == {[], []}
+      prove FiFo.new([1]) == {[1], []}
+      prove FiFo.new([1, 2]) == {[2], [1]}
+      prove FiFo.new([1, 2, 3]) == {[3, 2], [1]}
+      prove FiFo.new([1, 2, 3, 4]) == {[4, 3], [1, 2]}
+    end
+
+    batch "creates a queue form a range" do
+      prove FiFo.new(1..1) == {[1], []}
+      prove FiFo.new(1..2) == {[2], [1]}
+      prove FiFo.new(1..3) == {[3, 2], [1]}
+      prove FiFo.new(1..4) == {[4, 3], [1, 2]}
+    end
+  end
+
+  describe "to_list/1" do
+    batch "returns the list for a queue" do
+      prove [] |> FiFo.new() |> FiFo.to_list() == []
+      prove [1] |> FiFo.new() |> FiFo.to_list() == [1]
+      prove [1, 2] |> FiFo.new() |> FiFo.to_list() == [1, 2]
+      prove [1, 2, 3] |> FiFo.new() |> FiFo.to_list() == [1, 2, 3]
+      prove [1, 2, 3, 4] |> FiFo.new() |> FiFo.to_list() == [1, 2, 3, 4]
+
+      prove FiFo.to_list({[], [1, 2]}) == [1, 2]
+      prove FiFo.to_list({[2, 1], []}) == [1, 2]
+    end
   end
 
   describe "concat/1" do
-    test "with an empty list" do
-      assert FiFo.concat([]) == %FiFo{}
+    batch "with an empty list" do
+      prove FiFo.concat([]) == {[], []}
     end
 
-    test "with one queue" do
-      assert FiFo.concat([%FiFo{rear: [1], front: []}]) == %FiFo{rear: [1], front: []}
+    batch "with one queue" do
+      prove FiFo.concat([FiFo.new(1..10)]) == FiFo.new(1..10)
     end
 
-    test "with a list of queues" do
-      assert FiFo.concat([
-               %FiFo{rear: [], front: [1, 2]},
-               %FiFo{rear: [], front: []},
-               %FiFo{rear: [5, 4], front: [3]}
-             ]) == %FiFo{rear: [5, 4], front: [1, 2, 3]}
+    batch "with a list of queues" do
+      prove FiFo.concat([
+              FiFo.new(1..3),
+              FiFo.new(4..10),
+              FiFo.new(11..15)
+            ]) == FiFo.new(1..15)
+    end
+  end
+
+  describe "concat/2" do
+    batch "with two queues" do
+      prove FiFo.concat(FiFo.new(1..5), FiFo.new(6..10)) == FiFo.new(1..10)
     end
   end
 
   describe "drop/2" do
-    test "with an empty queue" do
-      assert FiFo.drop(%FiFo{}, 2) == %FiFo{}
-      assert FiFo.drop(%FiFo{}, 0) == %FiFo{}
-      assert FiFo.drop(%FiFo{}, -2) == %FiFo{}
+    batch "with an empty queue" do
+      prove FiFo.drop({[], []}, 2) == {[], []}
+      prove FiFo.drop({[], []}, 0) == {[], []}
+      prove FiFo.drop({[], []}, -2) == {[], []}
     end
 
-    test "drops a part from front" do
-      assert FiFo.drop(%FiFo{rear: [8, 7, 6], front: [1, 2, 3, 4, 5]}, 3) ==
-               %FiFo{rear: [8, 7, 6], front: [4, 5]}
+    batch "drops a part from front" do
+      prove FiFo.drop({[8, 7, 6], [1, 2, 3, 4, 5]}, 3) == {[8, 7, 6], [4, 5]}
     end
 
-    test "drops a part from rear" do
-      assert FiFo.drop(%FiFo{rear: [8, 7, 6], front: [1, 2, 3, 4, 5]}, -2) ==
-               %FiFo{rear: [6], front: [1, 2, 3, 4, 5]}
+    batch "drops a part from rear" do
+      prove FiFo.drop({[8, 7, 6], [1, 2, 3, 4, 5]}, -2) == {[6], [1, 2, 3, 4, 5]}
     end
 
-    test "drops the whole front" do
-      assert FiFo.drop(%FiFo{rear: [2], front: [1]}, 1) ==
-               %FiFo{rear: [2], front: []}
-
-      assert FiFo.drop(%FiFo{rear: [8, 7, 6], front: [1, 2, 3, 4, 5]}, 5) ==
-               %FiFo{rear: [8, 7], front: [6]}
+    batch "drops the whole front" do
+      prove FiFo.drop({[2], [1]}, 1) == {[2], []}
+      prove FiFo.drop({[8, 7, 6, 5], [1, 2, 3, 4]}, 4) == {[8, 7], [5, 6]}
     end
 
-    test "drops the whole rear" do
-      assert FiFo.drop(%FiFo{rear: [2], front: [1]}, -1) ==
-               %FiFo{rear: [], front: [1]}
-
-      assert FiFo.drop(%FiFo{rear: [8, 7, 6], front: [1, 2, 3, 4, 5]}, -3) ==
-               %FiFo{rear: [5, 4], front: [1, 2, 3]}
+    batch "drops the whole rear" do
+      prove FiFo.drop({[2], [1]}, -1) == {[], [1]}
+      prove FiFo.drop({[8, 7, 6], [1, 2, 3, 4, 5]}, -3) == {[5, 4, 3], [1, 2]}
     end
 
-    test "drops the whole front and a part from rear" do
-      assert FiFo.drop(%FiFo{rear: [8, 7, 6], front: [1, 2, 3, 4, 5]}, 6) ==
-               %FiFo{rear: [8], front: [7]}
-
-      assert FiFo.drop(%FiFo{rear: [8, 7, 6], front: [1, 2, 3, 4, 5]}, 7) ==
-               %FiFo{rear: [8], front: []}
+    batch "drops the whole front and a part from rear" do
+      prove FiFo.drop({[8, 7, 6], [1, 2, 3, 4, 5]}, 6) == {[8], [7]}
+      prove FiFo.drop({[8, 7, 6], [1, 2, 3, 4, 5]}, 7) == {[8], []}
     end
 
-    test "drops the whole rear and a part from front" do
-      assert FiFo.drop(%FiFo{rear: [8, 7, 6], front: [1, 2, 3, 4, 5]}, -6) ==
-               %FiFo{rear: [2], front: [1]}
-
-      assert FiFo.drop(%FiFo{rear: [8, 7, 6], front: [1, 2, 3, 4, 5]}, -7) ==
-               %FiFo{rear: [], front: [1]}
+    batch "drops the whole rear and a part from front" do
+      prove FiFo.drop({[8, 7, 6], [1, 2, 3, 4, 5]}, -6) == {[2], [1]}
+      prove FiFo.drop({[8, 7, 6], [1, 2, 3, 4, 5]}, -7) == {[], [1]}
     end
 
-    test "drops the whole queue from front" do
-      assert FiFo.drop(%FiFo{rear: [4, 3], front: [1, 2]}, 4) ==
-               %FiFo{rear: [], front: []}
-
-      assert FiFo.drop(%FiFo{rear: [4, 3], front: [1, 2]}, 6) ==
-               %FiFo{rear: [], front: []}
+    batch "drops the whole queue from front" do
+      prove FiFo.drop({[4, 3], [1, 2]}, 4) == {[], []}
+      prove FiFo.drop({[4, 3], [1, 2]}, 6) == {[], []}
     end
 
-    test "drops the whole queue from rear" do
-      assert FiFo.drop(%FiFo{rear: [4, 3], front: [1, 2]}, -4) ==
-               %FiFo{rear: [], front: []}
-
-      assert FiFo.drop(%FiFo{rear: [4, 3], front: [1, 2]}, -6) ==
-               %FiFo{rear: [], front: []}
+    batch "drops the whole queue from rear" do
+      prove FiFo.drop({[4, 3], [1, 2]}, -4) == {[], []}
+      prove FiFo.drop({[4, 3], [1, 2]}, -6) == {[], []}
     end
 
-    test "drops elements from a malformed queue from front" do
-      assert FiFo.drop(%FiFo{rear: [3, 2, 1], front: []}, 2) ==
-               %FiFo{rear: [3], front: []}
-
-      assert FiFo.drop(%FiFo{rear: [5, 4, 3, 2, 1], front: []}, 2) ==
-               %FiFo{rear: [5, 4], front: [3]}
-
-      assert FiFo.drop(%FiFo{rear: [], front: [1, 2, 3]}, 2) ==
-               %FiFo{rear: [], front: [3]}
-
-      assert FiFo.drop(%FiFo{rear: [], front: [1, 2, 3, 4, 5]}, 2) ==
-               %FiFo{rear: [], front: [3, 4, 5]}
+    batch "drops elements from a malformed queue from front" do
+      prove FiFo.drop({[3, 2, 1], []}, 2) == {[3], []}
+      prove FiFo.drop({[5, 4, 3, 2, 1], []}, 2) == {[5, 4], [3]}
+      prove FiFo.drop({[], [1, 2, 3]}, 2) == {[], [3]}
+      prove FiFo.drop({[], [1, 2, 3, 4, 5]}, 2) == {[], [3, 4, 5]}
     end
 
-    test "drops elements from a malformed queue from rear" do
-      assert FiFo.drop(%FiFo{rear: [3, 2, 1], front: []}, -2) ==
-               %FiFo{rear: [1], front: []}
+    batch "drops elements from a malformed queue from rear" do
+      prove FiFo.drop({[3, 2, 1], []}, -2) == {[1], []}
+      prove FiFo.drop({[5, 4, 3, 2, 1], []}, -2) == {[3, 2, 1], []}
+      prove FiFo.drop({[], [1, 2, 3]}, -2) == {[], [1]}
+      prove FiFo.drop({[], [1, 2, 3, 4, 5]}, -2) == {[3], [1, 2]}
+    end
+  end
 
-      assert FiFo.drop(%FiFo{rear: [5, 4, 3, 2, 1], front: []}, -2) ==
-               %FiFo{rear: [3, 2, 1], front: []}
-
-      assert FiFo.drop(%FiFo{rear: [], front: [1, 2, 3]}, -2) ==
-               %FiFo{rear: [], front: [1]}
-
-      assert FiFo.drop(%FiFo{rear: [], front: [1, 2, 3, 4, 5]}, -2) ==
-               %FiFo{rear: [3], front: [1, 2]}
+  describe "empty?/1" do
+    batch "returns true for an empty queue" do
+      prove [] |> FiFo.new() |> FiFo.empty?() == true
+      prove [1] |> FiFo.new() |> FiFo.empty?() == false
     end
   end
 
   describe "fetch/1" do
-    test "with an empty queue" do
-      assert FiFo.fetch(%FiFo{}) == :error
+    batch "with an empty queue" do
+      prove FiFo.fetch({[], []}) == {:error, {[], []}}
     end
 
-    test "with a non-empty queue" do
-      assert FiFo.fetch(%FiFo{rear: [1], front: []}) == {:ok, 1}
-      assert FiFo.fetch(%FiFo{rear: [], front: [1]}) == {:ok, 1}
-      assert FiFo.fetch(%FiFo{rear: [2], front: [1]}) == {:ok, 1}
-      assert FiFo.fetch(%FiFo{rear: [3, 2], front: [1]}) == {:ok, 1}
-      assert FiFo.fetch(%FiFo{rear: [3], front: [1, 2]}) == {:ok, 1}
-      assert FiFo.fetch(%FiFo{rear: [4, 3], front: [1, 2]}) == {:ok, 1}
+    batch "with a non-empty queue" do
+      prove FiFo.fetch({[1], []}) == {{:ok, 1}, {[], []}}
+      prove FiFo.fetch({[], [1]}) == {{:ok, 1}, {[], []}}
+      prove FiFo.fetch({[2], [1]}) == {{:ok, 1}, {[2], []}}
+      prove FiFo.fetch({[3, 2], [1]}) == {{:ok, 1}, {[3], [2]}}
+      prove FiFo.fetch({[3], [1, 2]}) == {{:ok, 1}, {[3], [2]}}
+      prove FiFo.fetch({[4, 3], [1, 2]}) == {{:ok, 1}, {[4, 3], [2]}}
     end
 
-    test "with a malformed queue" do
-      assert FiFo.fetch(%FiFo{rear: [], front: [1, 2]}) == {:ok, 1}
-      assert FiFo.fetch(%FiFo{rear: [2, 1], front: []}) == {:ok, 1}
+    batch "with a malformed queue" do
+      prove FiFo.fetch({[], [1, 2]}) == {{:ok, 1}, {[2], []}}
+      prove FiFo.fetch({[2, 1], []}) == {{:ok, 1}, {[2], []}}
     end
   end
 
   describe "fetch!/1" do
-    test "with an empty queue" do
-      assert_raise FiFo.EmptyError, fn ->
-        FiFo.fetch!(%FiFo{})
+    batch "from a queue" do
+      prove FiFo.fetch!({[2], [1]}) == {1, {[2], []}}
+    end
+
+    test "raises an error for an empty queue" do
+      assert_raise FiFo.EmptyError, "empty queue", fn ->
+        FiFo.fetch!(FiFo.new())
       end
-    end
-
-    test "with a non-empty queue" do
-      assert FiFo.fetch!(%FiFo{rear: [1], front: []}) == 1
-      assert FiFo.fetch!(%FiFo{rear: [], front: [1]}) == 1
-      assert FiFo.fetch!(%FiFo{rear: [2], front: [1]}) == 1
-      assert FiFo.fetch!(%FiFo{rear: [3, 2], front: [1]}) == 1
-      assert FiFo.fetch!(%FiFo{rear: [3], front: [1, 2]}) == 1
-      assert FiFo.fetch!(%FiFo{rear: [4, 3], front: [1, 2]}) == 1
-    end
-
-    test "with a malformed queue" do
-      assert FiFo.fetch!(%FiFo{rear: [], front: [1, 2]}) == 1
-      assert FiFo.fetch!(%FiFo{rear: [2, 1], front: []}) == 1
     end
   end
 
   describe "fetch_reverse/1" do
-    test "with an empty queue" do
-      assert FiFo.fetch_reverse(%FiFo{}) == :error
+    batch "with an empty queue" do
+      prove FiFo.fetch_reverse({[], []}) == {:error, {[], []}}
     end
 
-    test "with a non-empty queue" do
-      assert FiFo.fetch_reverse(%FiFo{rear: [1], front: []}) == {:ok, 1}
-      assert FiFo.fetch_reverse(%FiFo{rear: [], front: [1]}) == {:ok, 1}
-      assert FiFo.fetch_reverse(%FiFo{rear: [2], front: [1]}) == {:ok, 2}
-      assert FiFo.fetch_reverse(%FiFo{rear: [3, 2], front: [1]}) == {:ok, 3}
-      assert FiFo.fetch_reverse(%FiFo{rear: [3], front: [1, 2]}) == {:ok, 3}
-      assert FiFo.fetch_reverse(%FiFo{rear: [4, 3], front: [1, 2]}) == {:ok, 4}
+    batch "with a non-empty queue" do
+      prove FiFo.fetch_reverse({[1], []}) == {{:ok, 1}, {[], []}}
+      prove FiFo.fetch_reverse({[], [1]}) == {{:ok, 1}, {[], []}}
+      prove FiFo.fetch_reverse({[2], [1]}) == {{:ok, 2}, {[1], []}}
+      prove FiFo.fetch_reverse({[3, 2], [1]}) == {{:ok, 3}, {[2], [1]}}
+      prove FiFo.fetch_reverse({[3], [1, 2]}) == {{:ok, 3}, {[2], [1]}}
+      prove FiFo.fetch_reverse({[4, 3], [1, 2]}) == {{:ok, 4}, {[3], [1, 2]}}
     end
 
-    test "with a malformed queue" do
-      assert FiFo.fetch_reverse(%FiFo{rear: [], front: [1, 2]}) == {:ok, 2}
-      assert FiFo.fetch_reverse(%FiFo{rear: [2, 1], front: []}) == {:ok, 2}
+    batch "with a malformed queue" do
+      prove FiFo.fetch_reverse({[], [1, 2]}) == {{:ok, 2}, {[], [1]}}
+      prove FiFo.fetch_reverse({[2, 1], []}) == {{:ok, 2}, {[1], []}}
     end
   end
 
   describe "fetch_reverse!/1" do
-    test "with an empty queue" do
-      assert_raise FiFo.EmptyError, fn ->
-        FiFo.fetch_reverse!(%FiFo{})
+    batch "from a queue" do
+      prove FiFo.fetch_reverse!({[3, 2], [1]}) == {3, {[2], [1]}}
+    end
+
+    test "raises an error for an empty queue" do
+      assert_raise FiFo.EmptyError, "empty queue", fn ->
+        FiFo.fetch_reverse!(FiFo.new())
       end
-    end
-
-    test "with a non-empty queue" do
-      assert FiFo.fetch_reverse!(%FiFo{rear: [1], front: []}) == 1
-      assert FiFo.fetch_reverse!(%FiFo{rear: [], front: [1]}) == 1
-      assert FiFo.fetch_reverse!(%FiFo{rear: [2], front: [1]}) == 2
-      assert FiFo.fetch_reverse!(%FiFo{rear: [3, 2], front: [1]}) == 3
-      assert FiFo.fetch_reverse!(%FiFo{rear: [3], front: [1, 2]}) == 3
-      assert FiFo.fetch_reverse!(%FiFo{rear: [4, 3], front: [1, 2]}) == 4
-    end
-
-    test "with a malformed queue" do
-      assert FiFo.fetch_reverse!(%FiFo{rear: [], front: [1, 2]}) == 2
-      assert FiFo.fetch_reverse!(%FiFo{rear: [2, 1], front: []}) == 2
     end
   end
 
   describe "filter/2" do
-    test "removes all elements from front" do
-      assert FiFo.filter(%FiFo{rear: [7, 6, 5, 4, 3], front: [1, 2]}, fn x -> x > 2 end) ==
-               %FiFo{rear: [7, 6, 5], front: [3, 4]}
+    batch "filter a queue" do
+      prove FiFo.filter({[7, 6, 5, 4, 3], [1, 2, 3, 4]}, fn x -> x > 3 end) == {[7, 6, 5, 4], [4]}
     end
 
-    test "removes all elements from rear" do
-      assert FiFo.filter(%FiFo{rear: [7, 6, 5, 4, 3], front: [1, 2]}, fn x -> x <= 2 end) ==
-               %FiFo{rear: [2], front: [1]}
+    batch "removes all elements from front" do
+      prove FiFo.filter({[7, 6, 5, 4, 3], [1, 2]}, fn x -> x > 2 end) == {[7, 6], [3, 4, 5]}
     end
 
-    test "removes all elements" do
-      assert FiFo.filter(%FiFo{rear: [3], front: [1, 2]}, fn x -> x > 20 end) == %FiFo{}
+    batch "removes all elements from rear" do
+      prove FiFo.filter({[7, 6, 5, 4, 3], [1, 2]}, fn x -> x <= 2 end) == {[2], [1]}
     end
 
-    test "with malformed queue" do
-      assert FiFo.filter(%FiFo{rear: [4, 3, 2, 1]}, fn x -> rem(x, 2) == 0 end) ==
-               %FiFo{rear: [4], front: [2]}
+    batch "removes all elements" do
+      prove FiFo.filter({[3], [1, 2]}, fn x -> x > 20 end) == {[], []}
+    end
 
-      assert FiFo.filter(%FiFo{front: [1, 2, 3, 4]}, fn x -> rem(x, 2) == 0 end) ==
-               %FiFo{rear: [4], front: [2]}
+    batch "with malformed queue" do
+      prove FiFo.filter({[4, 3, 2, 1], []}, fn x -> rem(x, 2) == 0 end) == {[4], [2]}
     end
   end
 
   describe "get/1" do
-    test "with an empty queue" do
-      assert FiFo.get(%FiFo{}) == nil
+    batch "with an empty queue" do
+      prove FiFo.get({[], []}) == {nil, {[], []}}
+      prove FiFo.get({[], []}, :empty) == {:empty, {[], []}}
     end
 
-    test "with a non-empty queue" do
-      assert FiFo.get(%FiFo{rear: [1], front: []}) == 1
-      assert FiFo.get(%FiFo{rear: [], front: [1]}) == 1
-      assert FiFo.get(%FiFo{rear: [2], front: [1]}) == 1
-      assert FiFo.get(%FiFo{rear: [3, 2], front: [1]}) == 1
-      assert FiFo.get(%FiFo{rear: [3], front: [1, 2]}) == 1
-      assert FiFo.get(%FiFo{rear: [4, 3], front: [1, 2]}) == 1
+    batch "with a non-empty queue" do
+      prove FiFo.get({[1], []}) == {1, {[], []}}
+      prove FiFo.get({[], [1]}) == {1, {[], []}}
+      prove FiFo.get({[2], [1]}) == {1, {[2], []}}
+      prove FiFo.get({[3, 2], [1]}) == {1, {[3], [2]}}
+      prove FiFo.get({[3], [1, 2]}) == {1, {[3], [2]}}
+      prove FiFo.get({[4, 3], [1, 2]}) == {1, {[4, 3], [2]}}
     end
 
-    test "with a malformed queue" do
-      assert FiFo.get(%FiFo{rear: [], front: [1, 2]}) == 1
-      assert FiFo.get(%FiFo{rear: [2, 1], front: []}) == 1
+    batch "with a malformed queue" do
+      prove FiFo.get({[], [1, 2]}) == {1, {[2], []}}
+      prove FiFo.get({[2, 1], []}) == {1, {[2], []}}
     end
   end
 
   describe "get_reverse/1" do
-    test "with an empty queue" do
-      assert FiFo.get_reverse(%FiFo{}) == nil
+    batch "with an empty queue" do
+      prove FiFo.get_reverse({[], []}) == {nil, {[], []}}
+      prove FiFo.get_reverse({[], []}, :empty) == {:empty, {[], []}}
     end
 
-    test "with a non-empty queue" do
-      assert FiFo.get_reverse(%FiFo{rear: [1], front: []}) == 1
-      assert FiFo.get_reverse(%FiFo{rear: [], front: [1]}) == 1
-      assert FiFo.get_reverse(%FiFo{rear: [2], front: [1]}) == 2
-      assert FiFo.get_reverse(%FiFo{rear: [3, 2], front: [1]}) == 3
-      assert FiFo.get_reverse(%FiFo{rear: [3], front: [1, 2]}) == 3
-      assert FiFo.get_reverse(%FiFo{rear: [4, 3], front: [1, 2]}) == 4
+    batch "with a non-empty queue" do
+      prove FiFo.get_reverse({[1], []}) == {1, {[], []}}
+      prove FiFo.get_reverse({[], [1]}) == {1, {[], []}}
+      prove FiFo.get_reverse({[2], [1]}) == {2, {[1], []}}
+      prove FiFo.get_reverse({[3, 2], [1]}) == {3, {[2], [1]}}
+      prove FiFo.get_reverse({[3], [1, 2]}) == {3, {[2], [1]}}
+      prove FiFo.get_reverse({[4, 3], [1, 2]}) == {4, {[3], [1, 2]}}
     end
 
-    test "with a malformed queue" do
-      assert FiFo.get_reverse(%FiFo{rear: [], front: [1, 2]}) == 2
-      assert FiFo.get_reverse(%FiFo{rear: [2, 1], front: []}) == 2
-    end
-  end
-
-  describe "pop/2" do
-    test "with an empty queue" do
-      assert FiFo.pop(%FiFo{}) == {:error, %FiFo{}}
-    end
-
-    test "with a non-empty queue" do
-      assert FiFo.pop(%FiFo{rear: [1], front: []}) ==
-               {{:ok, 1}, %FiFo{}}
-
-      assert FiFo.pop(%FiFo{rear: [], front: [1]}) ==
-               {{:ok, 1}, %FiFo{}}
-
-      assert FiFo.pop(%FiFo{rear: [2], front: [1]}) ==
-               {{:ok, 1}, %FiFo{front: [2]}}
-
-      assert FiFo.pop(%FiFo{rear: [7, 6, 5, 4, 3, 2], front: [1]}) ==
-               {{:ok, 1}, %FiFo{rear: [7, 6, 5, 4], front: [2, 3]}}
-
-      assert FiFo.pop(%FiFo{rear: [3], front: [1, 2]}) ==
-               {{:ok, 1}, %FiFo{rear: [3], front: [2]}}
-
-      assert FiFo.pop(%FiFo{rear: [4, 3], front: [1, 2]}) ==
-               {{:ok, 1}, %FiFo{rear: [4, 3], front: [2]}}
-
-      assert FiFo.pop(%FiFo{rear: [3, 2], front: [1]}) ==
-               {{:ok, 1}, %FiFo{rear: [3], front: [2]}}
-    end
-
-    test "with a malformed queue" do
-      assert FiFo.pop(%FiFo{rear: [], front: [1, 2, 3, 4]}) ==
-               {{:ok, 1}, %FiFo{rear: [], front: [2, 3, 4]}}
-
-      assert FiFo.pop(%FiFo{rear: [4, 3, 2, 1], front: []}) ==
-               {{:ok, 1}, %FiFo{rear: [4, 3, 2], front: []}}
+    batch "with a malformed queue" do
+      prove FiFo.get_reverse({[], [1, 2]}) == {2, {[], [1]}}
+      prove FiFo.get_reverse({[2, 1], []}) == {2, {[1], []}}
     end
   end
 
-  describe "pop!/2" do
-    test "with an empty queue" do
-      assert_raise FiFo.EmptyError, fn ->
-        FiFo.pop!(%FiFo{})
-      end
-    end
-
-    test "with a non-empty queue" do
-      assert FiFo.pop!(%FiFo{rear: [1], front: []}) ==
-               {1, %FiFo{}}
-
-      assert FiFo.pop!(%FiFo{rear: [], front: [1]}) ==
-               {1, %FiFo{}}
-
-      assert FiFo.pop!(%FiFo{rear: [2], front: [1]}) ==
-               {1, %FiFo{front: [2]}}
-
-      assert FiFo.pop!(%FiFo{rear: [7, 6, 5, 4, 3, 2], front: [1]}) ==
-               {1, %FiFo{rear: [7, 6, 5, 4], front: [2, 3]}}
-
-      assert FiFo.pop!(%FiFo{rear: [3], front: [1, 2]}) ==
-               {1, %FiFo{rear: [3], front: [2]}}
-
-      assert FiFo.pop!(%FiFo{rear: [4, 3], front: [1, 2]}) ==
-               {1, %FiFo{rear: [4, 3], front: [2]}}
-    end
-
-    test "with a malformed queue" do
-      assert FiFo.pop!(%FiFo{rear: [], front: [1, 2, 3, 4]}) ==
-               {1, %FiFo{rear: [], front: [2, 3, 4]}}
-
-      assert FiFo.pop!(%FiFo{rear: [4, 3, 2, 1], front: []}) ==
-               {1, %FiFo{rear: [4, 3, 2], front: []}}
+  describe "map/2" do
+    batch "maps the queue" do
+      prove FiFo.map({[4, 3], [1, 2]}, fn value -> value + 1 end) == {[5, 4], [2, 3]}
     end
   end
 
-  describe "pop_reverse/2" do
-    test "with an empty queue" do
-      assert FiFo.pop_reverse(%FiFo{}) == {:error, %FiFo{}}
-    end
-
-    test "with a non-empty queue" do
-      assert FiFo.pop_reverse(%FiFo{rear: [1], front: []}) ==
-               {{:ok, 1}, %FiFo{}}
-
-      assert FiFo.pop_reverse(%FiFo{rear: [], front: [1]}) ==
-               {{:ok, 1}, %FiFo{}}
-
-      assert FiFo.pop_reverse(%FiFo{rear: [2], front: [1]}) ==
-               {{:ok, 2}, %FiFo{front: [1]}}
-
-      assert FiFo.pop_reverse(%FiFo{rear: [7, 6, 5, 4, 3, 2], front: [1]}) ==
-               {{:ok, 7}, %FiFo{rear: [6, 5, 4, 3, 2], front: [1]}}
-
-      assert FiFo.pop_reverse(%FiFo{rear: [7], front: [1, 2, 3, 4, 5, 6]}) ==
-               {{:ok, 7}, %FiFo{rear: [6, 5], front: [1, 2, 3, 4]}}
-
-      assert FiFo.pop_reverse(%FiFo{rear: [4, 3], front: [1, 2]}) ==
-               {{:ok, 4}, %FiFo{rear: [3], front: [1, 2]}}
-
-      assert FiFo.pop_reverse(%FiFo{rear: [3, 2], front: [1]}) ==
-               {{:ok, 3}, %FiFo{rear: [2], front: [1]}}
-    end
-
-    test "with a malformed queue" do
-      assert FiFo.pop_reverse(%FiFo{rear: [], front: [1, 2, 3, 4]}) ==
-               {{:ok, 4}, %FiFo{rear: [], front: [1, 2, 3]}}
-
-      assert FiFo.pop_reverse(%FiFo{rear: [4, 3, 2, 1], front: []}) ==
-               {{:ok, 4}, %FiFo{rear: [3, 2, 1], front: []}}
-    end
-  end
-
-  describe "pop_reverse!/2" do
-    test "with an empty queue" do
-      assert_raise FiFo.EmptyError, fn ->
-        FiFo.pop_reverse!(%FiFo{})
-      end
-    end
-
-    test "with a non-empty queue" do
-      assert FiFo.pop_reverse!(%FiFo{rear: [1], front: []}) ==
-               {1, %FiFo{}}
-
-      assert FiFo.pop_reverse!(%FiFo{rear: [], front: [1]}) ==
-               {1, %FiFo{}}
-
-      assert FiFo.pop_reverse!(%FiFo{rear: [2], front: [1]}) ==
-               {2, %FiFo{front: [1]}}
-
-      assert FiFo.pop_reverse!(%FiFo{rear: [7, 6, 5, 4, 3, 2], front: [1]}) ==
-               {7, %FiFo{rear: [6, 5, 4, 3, 2], front: [1]}}
-
-      assert FiFo.pop_reverse!(%FiFo{rear: [3], front: [1, 2]}) ==
-               {3, %FiFo{rear: [2], front: [1]}}
-
-      assert FiFo.pop_reverse!(%FiFo{rear: [4, 3], front: [1, 2]}) ==
-               {4, %FiFo{rear: [3], front: [1, 2]}}
-    end
-
-    test "with a malformed queue" do
-      assert FiFo.pop_reverse!(%FiFo{rear: [], front: [1, 2, 3, 4]}) ==
-               {4, %FiFo{rear: [], front: [1, 2, 3]}}
-
-      assert FiFo.pop_reverse!(%FiFo{rear: [4, 3, 2, 1], front: []}) ==
-               {4, %FiFo{rear: [3, 2, 1], front: []}}
+  describe "member?/2" do
+    batch "returns true if the given value is member of the queue" do
+      prove FiFo.member?({[4, 3], [1, 2]}, 2) == true
+      prove FiFo.member?({[4, 3], [1, 2]}, 666) == false
     end
   end
 
   describe "push/2" do
-    test "with an empty queue" do
-      assert FiFo.push(%FiFo{}, 1) == %FiFo{rear: [1], front: []}
+    batch "with an empty queue" do
+      prove FiFo.push({[], []}, [1, 2, 3]) == {[3, 2], [1]}
     end
 
-    test "with a non-empty queue" do
-      assert FiFo.push(%FiFo{rear: [1], front: []}, 2) ==
-               %FiFo{rear: [2], front: [1]}
-
-      assert FiFo.push(%FiFo{rear: [], front: [1]}, 2) ==
-               %FiFo{rear: [2], front: [1]}
-
-      assert FiFo.push(%FiFo{rear: [2], front: [1]}, 3) ==
-               %FiFo{rear: [3, 2], front: [1]}
-
-      assert FiFo.push(%FiFo{rear: [3, 2], front: [1]}, 4) ==
-               %FiFo{rear: [4, 3, 2], front: [1]}
-
-      assert FiFo.push(%FiFo{rear: [4, 3], front: [1, 2]}, 5) ==
-               %FiFo{rear: [5, 4, 3], front: [1, 2]}
+    batch "with a non-empty queue" do
+      prove FiFo.push({[1], []}, [2, 3]) == {[3], [1, 2]}
+      prove FiFo.push({[], [1]}, [2, 3]) == {[3, 2], [1]}
+      prove FiFo.push({[2], [1]}, [3, 4]) == {[4, 3, 2], [1]}
+      prove FiFo.push({[3, 2], [1]}, [4, 5]) == {[5, 4, 3, 2], [1]}
+      prove FiFo.push({[4, 3], [1, 2]}, [5, 6, 7]) == {[7, 6, 5, 4, 3], [1, 2]}
     end
 
-    test "with a malformed queue" do
-      assert FiFo.push(%FiFo{rear: [], front: [1, 2]}, 3) ==
-               %FiFo{rear: [3], front: [1, 2]}
-
-      assert FiFo.push(%FiFo{rear: [2, 1], front: []}, 3) ==
-               %FiFo{rear: [3, 2], front: [1]}
+    batch "with a malformed queue" do
+      prove FiFo.push({[], [1, 2]}, [3, 4]) == {[4, 3], [1, 2]}
+      prove FiFo.push({[2, 1], []}, [3, 4]) == {[4, 3, 2], [1]}
     end
   end
 
   describe "push_reverse/2" do
-    test "with an empty queue" do
-      assert FiFo.push_reverse(%FiFo{}, 1) == %FiFo{rear: [], front: [1]}
+    batch "with an empty queue" do
+      prove FiFo.push_reverse({[], []}, [1, 2, 3]) == {[3, 2], [1]}
     end
 
-    test "with a non-empty queue" do
-      assert FiFo.push_reverse(%FiFo{rear: [1], front: []}, 2) ==
-               %FiFo{rear: [1], front: [2]}
-
-      assert FiFo.push_reverse(%FiFo{rear: [], front: [1]}, 2) ==
-               %FiFo{rear: [1], front: [2]}
-
-      assert FiFo.push_reverse(%FiFo{rear: [3], front: [2]}, 1) ==
-               %FiFo{rear: [3], front: [1, 2]}
-
-      assert FiFo.push_reverse(%FiFo{rear: [4, 3], front: [2]}, 1) ==
-               %FiFo{rear: [4, 3], front: [1, 2]}
-
-      assert FiFo.push_reverse(%FiFo{rear: [5, 4], front: [2, 3]}, 1) ==
-               %FiFo{rear: [5, 4], front: [1, 2, 3]}
+    batch "with a non-empty queue" do
+      prove FiFo.push_reverse({[3], []}, [1, 2]) == {[3], [1, 2]}
+      prove FiFo.push_reverse({[], [3]}, [1, 2]) == {[3], [1, 2]}
+      prove FiFo.push_reverse({[4], [3]}, [1, 2]) == {[4], [1, 2, 3]}
+      prove FiFo.push_reverse({[5, 4], [3]}, [1, 2]) == {[5, 4], [1, 2, 3]}
     end
 
-    test "with a malformed queue" do
-      assert FiFo.push_reverse(%FiFo{rear: [], front: [2, 3]}, 1) ==
-               %FiFo{rear: [], front: [1, 2, 3]}
-
-      assert FiFo.push_reverse(%FiFo{rear: [3, 2], front: []}, 1) ==
-               %FiFo{rear: [3, 2], front: [1]}
+    batch "with a malformed queue" do
+      prove FiFo.push_reverse({[], [3, 4]}, [1, 2]) == {[4], [1, 2, 3]}
+      prove FiFo.push_reverse({[4, 3], []}, [1, 2]) == {[4, 3], [1, 2]}
     end
   end
 
   describe "reject/2" do
-    test "removes all elements from front" do
-      assert FiFo.reject(%FiFo{rear: [7, 6, 5, 4, 3], front: [1, 2]}, fn x -> x <= 2 end) ==
-               %FiFo{rear: [7, 6, 5], front: [3, 4]}
+    batch "removes all elements from front" do
+      prove FiFo.reject({[7, 6, 5, 4, 3], [1, 2]}, fn x -> x <= 2 end) == {[7, 6], [3, 4, 5]}
     end
 
-    test "removes all elements from rear" do
-      assert FiFo.reject(%FiFo{rear: [7, 6, 5, 4, 3], front: [1, 2]}, fn x -> x > 2 end) ==
-               %FiFo{rear: [2], front: [1]}
+    batch "removes all elements from rear" do
+      prove FiFo.reject({[7, 6, 5, 4, 3], [1, 2]}, fn x -> x > 2 end) == {[2], [1]}
     end
 
-    test "removes all elements" do
-      assert FiFo.reject(%FiFo{rear: [3], front: [1, 2]}, fn x -> x < 20 end) == %FiFo{}
+    batch "removes all elements" do
+      prove FiFo.reject({[3], [1, 2]}, fn x -> x < 20 end) == {[], []}
     end
 
-    test "with malformed queue" do
-      assert FiFo.reject(%FiFo{rear: [4, 3, 2, 1]}, fn x -> rem(x, 2) != 0 end) ==
-               %FiFo{rear: [4], front: [2]}
-
-      assert FiFo.reject(%FiFo{front: [1, 2, 3, 4]}, fn x -> rem(x, 2) != 0 end) ==
-               %FiFo{rear: [4], front: [2]}
+    batch "with malformed queue" do
+      prove FiFo.reject({[4, 3, 2, 1], []}, fn x -> rem(x, 2) != 0 end) == {[4], [2]}
+      prove FiFo.reject({[], [1, 2, 3, 4]}, fn x -> rem(x, 2) != 0 end) == {[4], [2]}
     end
   end
 
-  describe "take" do
-    setup do
-      %{queue: %FiFo{rear: [10, 9, 8, 7, 6], front: [1, 2, 3, 4, 5]}}
-    end
+  describe "put/2" do
+    batch "puts a value to a queue" do
+      prove FiFo.put({[], []}, 1) == {[1], []}
+      prove FiFo.put({[1], []}, 2) == {[2], [1]}
+      prove FiFo.put({[2], [1]}, 3) == {[3, 2], [1]}
+      prove FiFo.put({[3, 2], [1]}, 4) == {[4, 3, 2], [1]}
 
-    test "take one by one from front", %{queue: queue} do
-      assert {[1], queue} = FiFo.take(queue, 1)
-      assert {[2], queue} = FiFo.take(queue, 1)
-      assert {[3], queue} = FiFo.take(queue, 1)
-      assert {[4], queue} = FiFo.take(queue, 1)
-      assert {[5], queue} = FiFo.take(queue, 1)
-      assert {[6], queue} = FiFo.take(queue, 1)
-      assert {[7], queue} = FiFo.take(queue, 1)
-      assert {[8], queue} = FiFo.take(queue, 1)
-      assert {[9], queue} = FiFo.take(queue, 1)
-      assert {[10], _queue} = FiFo.take(queue, 1)
-    end
+      prove FiFo.put({[], [1, 2, 3]}, 4) == {[4], [1, 2, 3]}
 
-    test "take one by one from rear", %{queue: queue} do
-      assert {[10], queue} = FiFo.take(queue, -1)
-      assert {[9], queue} = FiFo.take(queue, -1)
-      assert {[8], queue} = FiFo.take(queue, -1)
-      assert {[7], queue} = FiFo.take(queue, -1)
-      assert {[6], queue} = FiFo.take(queue, -1)
-      assert {[5], queue} = FiFo.take(queue, -1)
-      assert {[4], queue} = FiFo.take(queue, -1)
-      assert {[3], queue} = FiFo.take(queue, -1)
-      assert {[2], queue} = FiFo.take(queue, -1)
-      assert {[1], _queue} = FiFo.take(queue, -1)
-    end
-
-    test "take some from front", %{queue: queue} do
-      assert FiFo.take(queue, 3) == {[1, 2, 3], %FiFo{rear: [10, 9, 8, 7, 6], front: [4, 5]}}
-    end
-
-    test "take all from front", %{queue: queue} do
-      assert FiFo.take(queue, 5) == {[1, 2, 3, 4, 5], %FiFo{rear: [10, 9, 8], front: [6, 7]}}
-    end
-
-    test "take all from front and some from rear", %{queue: queue} do
-      assert FiFo.take(queue, 7) == {[1, 2, 3, 4, 5, 6, 7], %FiFo{rear: [10, 9], front: [8]}}
-    end
-
-    test "take all", %{queue: queue} do
-      assert FiFo.take(queue, 10) == {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], %FiFo{}}
-      assert FiFo.take(queue, 15) == {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], %FiFo{}}
-      assert FiFo.take(queue, -10) == {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1], %FiFo{}}
-      assert FiFo.take(queue, -15) == {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1], %FiFo{}}
-    end
-
-    test "take some from rear", %{queue: queue} do
-      assert FiFo.take(queue, -3) == {[10, 9, 8], %FiFo{rear: [7, 6], front: [1, 2, 3, 4, 5]}}
-    end
-
-    test "take all from rear", %{queue: queue} do
-      assert FiFo.take(queue, -5) == {[10, 9, 8, 7, 6], %FiFo{rear: [5, 4], front: [1, 2, 3]}}
-    end
-
-    test "take all from rear and some from front", %{queue: queue} do
-      assert FiFo.take(queue, -7) == {[10, 9, 8, 7, 6, 5, 4], %FiFo{rear: [3], front: [1, 2]}}
-    end
-
-    test "take all (special cases)" do
-      empty = FiFo.new()
-
-      queue = %FiFo{rear: [], front: [1, 2, 3]}
-      assert FiFo.take(queue, 10) == {[1, 2, 3], empty}
-
-      queue = %FiFo{rear: [3, 2, 1], front: []}
-      assert FiFo.take(queue, 10) == {[1, 2, 3], empty}
-
-      queue = %FiFo{rear: [3, 2], front: [1]}
-      assert FiFo.take(queue, 10) == {[1, 2, 3], empty}
-
-      queue = %FiFo{rear: [2], front: [1]}
-      assert FiFo.take(queue, 2) == {[1, 2], empty}
+      prove FiFo.put({[2, 1], []}, 3) == {[3, 2], [1]}
+      prove FiFo.put({[3, 2, 1], []}, 4) == {[4, 3, 2], [1]}
     end
   end
 
-  describe "enumerable" do
-    test "slice" do
-      assert Enum.slice(FiFo.from_range(1..6), 2, 4) == [3, 4, 5, 6]
-      assert Enum.slice(FiFo.from_range(1..8), 2, 4) == [3, 4, 5, 6]
-      assert Enum.slice(FiFo.new(), 2, 4) == []
-    end
+  describe "put_reverse/2" do
+    batch "puts a value to a queue" do
+      prove FiFo.put_reverse({[], []}, 4) == {[], [4]}
+      prove FiFo.put_reverse({[], [4]}, 3) == {[4], [3]}
+      prove FiFo.put_reverse({[4], [3]}, 2) == {[4], [2, 3]}
+      prove FiFo.put_reverse({[4], [2, 3]}, 1) == {[4], [1, 2, 3]}
 
-    test "reduce" do
-      assert Enum.reduce(FiFo.from_range(1..3), 0, fn x, acc -> x + acc end) == 6
-    end
+      prove FiFo.put_reverse({[4, 3, 2], []}, 1) == {[4, 3, 2], [1]}
 
-    test "member?" do
-      queue = FiFo.from_range(1..5)
-      assert Enum.member?(queue, 1) == true
-      assert Enum.member?(queue, 9) == false
-    end
-
-    test "count" do
-      assert Enum.count(FiFo.from_range(1..5)) == 5
-    end
-
-    test "map" do
-      queue = %FiFo{rear: [10, 9, 8, 7, 6], front: [1, 2, 3, 4, 5]}
-      assert Enum.map(queue, fn x -> x * 2 end) == [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+      prove FiFo.put_reverse({[], [2, 3]}, 1) == {[3], [1, 2]}
+      prove FiFo.put_reverse({[], [2, 3, 4]}, 1) == {[4, 3], [1, 2]}
     end
   end
 
-  test "Enum.into/2" do
-    assert Enum.into([1, 2, 3], FiFo.new()) == %FiFo{rear: [3, 2], front: [1]}
+  describe "take/2" do
+    batch "from an empty queue" do
+      prove FiFo.take({[], []}, 0) == {[], {[], []}}
+      prove FiFo.take({[], []}, 10) == {[], {[], []}}
+    end
+
+    batch "from a queue" do
+      prove FiFo.take({[4, 3], [1, 2]}, 0) == {[], {[4, 3], [1, 2]}}
+      prove FiFo.take({[4, 3], [1, 2]}, 1) == {[1], {[4, 3], [2]}}
+      prove FiFo.take({[4, 3], [1, 2]}, 2) == {[1, 2], {[4], [3]}}
+      prove FiFo.take({[4, 3], [1, 2]}, 3) == {[1, 2, 3], {[4], []}}
+      prove FiFo.take({[4, 3], [1, 2]}, 4) == {[1, 2, 3, 4], {[], []}}
+      prove FiFo.take({[4, 3], [1, 2]}, 5) == {[1, 2, 3, 4], {[], []}}
+      prove FiFo.take({[4, 3], [1, 2]}, -1) == {[4], {[3], [1, 2]}}
+      prove FiFo.take({[4, 3], [1, 2]}, -2) == {[4, 3], {[2], [1]}}
+      prove FiFo.take({[4, 3], [1, 2]}, -3) == {[4, 3, 2], {[], [1]}}
+      prove FiFo.take({[4, 3], [1, 2]}, -4) == {[4, 3, 2, 1], {[], []}}
+      prove FiFo.take({[4, 3], [1, 2]}, -5) == {[4, 3, 2, 1], {[], []}}
+    end
+
+    batch "from a malformed queue" do
+      prove FiFo.take({[4, 3, 2, 1], []}, 2) == {[1, 2], {[4], [3]}}
+      prove FiFo.take({[4, 3, 2, 1], []}, -2) == {[4, 3], {[2], [1]}}
+      prove FiFo.take({[], [1, 2, 3, 4]}, 2) == {[1, 2], {[4], [3]}}
+      prove FiFo.take({[], [1, 2, 3, 4]}, -2) == {[4, 3], {[2], [1]}}
+
+      prove FiFo.take({[], [1, 2, 3, 4]}, 4) == {[1, 2, 3, 4], {[], []}}
+      prove FiFo.take({[4, 3, 2, 1], []}, -4) == {[4, 3, 2, 1], {[], []}}
+    end
+  end
+
+  describe "peek/2" do
+    batch "in an empty queue" do
+      prove FiFo.peek({[], []}) == nil
+      prove FiFo.peek({[], []}, :empty) == :empty
+    end
+
+    batch "in a queue" do
+      prove FiFo.peek({[1], []}) == 1
+      prove FiFo.peek({[], [1]}) == 1
+      prove FiFo.peek({[3, 2], [1]}) == 1
+    end
+
+    batch "in a malformed queue" do
+      prove FiFo.peek({[3, 2, 1], []}) == 1
+      prove FiFo.peek({[], [1, 2, 3]}) == 1
+    end
+  end
+
+  describe "peek_reverse/2" do
+    batch "in an empty queue" do
+      prove FiFo.peek_reverse({[], []}) == nil
+      prove FiFo.peek_reverse({[], []}, :empty) == :empty
+    end
+
+    batch "in a queue" do
+      prove FiFo.peek_reverse({[1], []}) == 1
+      prove FiFo.peek_reverse({[], [1]}) == 1
+      prove FiFo.peek_reverse({[4], [1, 2, 3]}) == 4
+    end
+
+    batch "in a malformed queue" do
+      prove FiFo.peek_reverse({[3, 2, 1], []}) == 3
+      prove FiFo.peek_reverse({[], [1, 2, 3]}) == 3
+    end
+  end
+
+  describe "all?/2" do
+    batch "in queue" do
+      prove FiFo.all?({[], []}, fn x -> x > 0 end) == true
+      prove FiFo.all?({[2, 1], []}, fn x -> x > 0 end) == true
+      prove FiFo.all?({[], [1, 2]}, fn x -> x > 0 end) == true
+      prove FiFo.all?({[4, 3], [1, 2]}, fn x -> x > 0 end) == true
+      prove FiFo.all?({[4, -3], [1, 2]}, fn x -> x > 0 end) == false
+    end
+  end
+
+  describe "any?/2" do
+    batch "in queue" do
+      prove FiFo.any?({[], []}, fn x -> x < 0 end) == false
+      prove FiFo.any?({[2, 1], []}, fn x -> x < 0 end) == false
+      prove FiFo.any?({[], [1, 2]}, fn x -> x < 0 end) == false
+      prove FiFo.any?({[4, 3], [1, 2]}, fn x -> x < 0 end) == false
+      prove FiFo.any?({[4, -3], [1, 2]}, fn x -> x < 0 end) == true
+    end
   end
 end
