@@ -14,8 +14,13 @@ defmodule FiFo.MixProject do
       test_coverage: [tool: ExCoveralls],
       source_url: "https://github.com/hrzndhrn/fi_fo",
       aliases: aliases(),
-      docs: [main: "FiFo"],
-      preferred_cli_env: [
+      docs: [main: "FiFo"]
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [
         carp: :test,
         coveralls: :test,
         "coveralls.detail": :test,
