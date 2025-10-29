@@ -235,7 +235,7 @@ defmodule FiFo do
   Fetches element at the front of `queue`, erroring out if `queue` is empty.
 
   If `queue` is not empty, then `{:ok, value}` is returned. If `queue` is
-  empty a `FiFo.EmptyError` excepetion is raised.
+  empty a `FiFo.EmptyError` exception is raised.
 
   ## Examples
 
@@ -293,7 +293,7 @@ defmodule FiFo do
   Fetches `value` at the rear of `queue`, erroring out if `queue` is empty.
 
   If `queue` is not empty, then `{:ok, value}` is returned. If `queue` is
-  empty a `FiFo.EmptyError` excepetion is raised.
+  empty a `FiFo.EmptyError` exception is raised.
 
   ## Examples
 

@@ -4,7 +4,7 @@
 
 ### Breaking changes
 
-`FiFo` was completly refactored. The module uses now the same type of queue
+`FiFo` was completely refactored. The module uses now the same type of queue
 (`{[value], [value]}`) as Erlang. The struct `FiFo` was removed.
 
 ## 0.1.2 - 2022/10/22
